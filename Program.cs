@@ -8,7 +8,6 @@ namespace NETWebCrawler
     /// </summary>
     class Program
     {
-        static readonly char[] circle = { '◜', '◝', '◞', '◟' }; // Unicode characters for circle animation    
         static async Task Main(string[] args)
         {
             WebCrawler crawler = new WebCrawler();
@@ -22,12 +21,10 @@ namespace NETWebCrawler
 
             Console. Write("Crawling...");
 
-            int i = 0;
             while (crawler.IsCrawling())
             {
                 await Task.Delay(1000);
-                Console.Write($"{circle[i % circle.Length]}\b");
-                i++;
+                Console.Write(".");
             }
             Console.WriteLine("Done");
 

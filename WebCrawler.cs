@@ -61,13 +61,17 @@ namespace NETWebCrawler
                 if (string.IsNullOrWhiteSpace(pageUrl) || string.IsNullOrEmpty(pageUrl))
                     continue;
 
-                string link = MakeAbsoluteUrl(pageUrl, ""); //Stops the user being able to give us a relative URL as the start URL
-                if (m_Visited.Contains(link))
-                    continue;           //code ordering here Stop the user giving us 10 of the same link (Grr naughty user!)
+                bool goodUrl = FixHumanUrl(pageUrl, out Uri? fixedUri);
+                if (goodUrl && fixedUri != null)
+                {
+                    string link = MakeAbsoluteUrl(fixedUri.AbsoluteUri, ""); //Stops the user being able to give us a relative URL as the start URL
+                    if (m_Visited.Contains(link))
+                        continue;           //code ordering here Stop the user giving us 10 of the same link (Grr naughty user!)
 
-                m_Visited.Add(link);
-                CrawlRequest request = new CrawlRequest(link, 0);
-                m_RequestList.Enqueue(request);
+                    m_Visited.Add(link);
+                    CrawlRequest request = new CrawlRequest(link, 0);
+                    m_RequestList.Enqueue(request);
+                }
             }
 
             if (m_RequestList.Count == 0)
@@ -185,6 +189,22 @@ namespace NETWebCrawler
             return string.Empty;
         }
 
+        //we may need to add an HTTP to the url the people pass in
+        private static bool FixHumanUrl(string url, out Uri? uri)
+        {
+            uri = null;
+
+            if (Uri.TryCreate(url, UriKind.Absolute, out Uri? parsed) &&
+                (parsed.Scheme == Uri.UriSchemeHttp || parsed.Scheme == Uri.UriSchemeHttps))
+            {
+                uri = parsed;
+                return true;
+            }
+
+            // Try treating the input as a hostname or URL missing its scheme.
+            return Uri.TryCreate("https://" + url, UriKind.Absolute, out uri);
+        }
+
 
         /// <summary>
         /// Converts a relative URL to an absolute URL based on the specified base URL.
@@ -195,12 +215,18 @@ namespace NETWebCrawler
         /// <returns>The absolute URL as a string, or an empty string if it cannot be resolved.</returns>
         string MakeAbsoluteUrl(string baseUrl, string link)
         {
-            bool goodLink = Uri.TryCreate(new Uri(baseUrl), link, out Uri? resolved);
-            if (goodLink && resolved!=null && (resolved.Scheme == Uri.UriSchemeHttp || resolved.Scheme == Uri.UriSchemeHttps)) //Relying on IF execution order to ensure 'resolved' is not null and has a valid HTTP/HTTPS scheme
+            bool goodurl = Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri? baseUri);
+
+            if (goodurl)
             {
-                UriBuilder builder = new UriBuilder(resolved);
-                builder.Fragment = "";
-                return  builder.Uri.AbsoluteUri;
+                bool goodLink=Uri.TryCreate(baseUri, link, out Uri? resolved);
+            
+                if (goodLink && resolved!=null && (resolved.Scheme == Uri.UriSchemeHttp || resolved.Scheme == Uri.UriSchemeHttps)) //Relying on IF execution order to ensure 'resolved' is not null and has a valid HTTP/HTTPS scheme
+                {
+                    UriBuilder builder = new UriBuilder(resolved);
+                    builder.Fragment = "";
+                    return  builder.Uri.AbsoluteUri;
+                }
             }
             return string.Empty;
         }
