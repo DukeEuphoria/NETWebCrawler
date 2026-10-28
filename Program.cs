@@ -8,18 +8,69 @@ namespace NETWebCrawler
     /// </summary>
     class Program
     {
-        static async Task Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
-            WebCrawler crawler = new WebCrawler();
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Please provide at least one start URL.");
+                return -1;
+            }
 
-            bool startedOK=crawler.StartCrawl(args);
+            int maxDepth = 2;
+
+            List<string> startUrls = new List<string>();
+            for (int i=0;i<args.Length;i++)
+            {
+                string arg = args[i];
+
+                arg=arg.ToLower();
+                if (arg=="-depth" || arg=="-d")
+                {
+                    if (i+1 < args.Length && int.TryParse(args[i+1], out int depth))
+                    {
+                        maxDepth = depth;
+                        i++; // Skip the next argument as it is the depth value
+                    }
+                    continue;
+                }
+
+                if (arg.StartsWith("-depth=") || arg.StartsWith("-d="))
+                {
+                    string[] parts = arg.Split('=');
+                    if (parts.Length == 2 && int.TryParse(parts[1], out int depth))
+                    {
+                        maxDepth = depth;
+                    }
+                    continue;
+                }
+
+                if (maxDepth <= 0 || maxDepth > 10)
+                {
+                    maxDepth = Math.Clamp(maxDepth, 1, 10);
+                    Console.WriteLine("Invalid depth specified. Must be between 1 and 10. Depth Clamped to " + maxDepth);
+                }
+
+                if (arg.StartsWith("-?") || arg.StartsWith("-h") || arg.StartsWith("--help"))
+                {
+                    Console.WriteLine("Usage: WEBCRAWL <url1> <url2> ... [-depth <n>]");
+                    return 0;
+                }
+
+                startUrls.Add(arg);
+            }
+
+
+
+
+            WebCrawler crawler = new WebCrawler();
+            bool startedOK=crawler.StartCrawl(startUrls, maxDepth);
             if (!startedOK)
             {
                 Console.WriteLine("Failed to start crawl.");
-                return;
+                return -1;
             }
 
-            Console. Write("Crawling...");
+            Console. Write("Crawling. Max depth: " + maxDepth);
 
             while (crawler.IsCrawling())
             {
@@ -29,6 +80,7 @@ namespace NETWebCrawler
             Console.WriteLine("Done");
 
             crawler.ReportResults();
+            return 0;
         }
     }
 }

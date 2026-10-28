@@ -30,15 +30,13 @@ namespace NETWebCrawler
             public Status CrawlStatus { get; set; } = crawlStatus;
         }
 
-        Queue<CrawlRequest>    m_RequestList;
-        HashSet<string> m_Visited;
+        Queue<CrawlRequest>     m_RequestList;
+        HashSet<string>         m_Visited;
 
-        List<CrawlResult> m_Results;
+        List<CrawlResult>       m_Results;
 
         HttpClient m_Client;
         Task? m_CrawlTask;
-
-        const int MaxDepth = 2;
 
         public WebCrawler()
         {
@@ -48,9 +46,9 @@ namespace NETWebCrawler
             m_Client = new HttpClient();
         }
 
-        public bool StartCrawl(string[] startUrl)
+        public bool StartCrawl(List<string> startUrl, int maxDepth)
         {
-            if (startUrl == null || startUrl.Length == 0)
+            if (startUrl == null || startUrl.Count == 0)
             {
                 Console.WriteLine("Start URL cannot be null or empty.", nameof(startUrl));
                 return false;
@@ -58,7 +56,7 @@ namespace NETWebCrawler
 
             foreach (string pageUrl in startUrl)
             {
-                if (string.IsNullOrWhiteSpace(pageUrl) || string.IsNullOrEmpty(pageUrl))
+                if (string.IsNullOrWhiteSpace(pageUrl))
                     continue;
 
                 bool goodUrl = FixHumanUrl(pageUrl, out Uri? fixedUri);
@@ -80,7 +78,7 @@ namespace NETWebCrawler
                 return false;                
             }
 
-            m_CrawlTask = CreateCrawlTask();
+            m_CrawlTask = CreateCrawlTask(maxDepth);
             return true;
         }
 
@@ -89,7 +87,7 @@ namespace NETWebCrawler
             return m_CrawlTask != null && !m_CrawlTask.IsCompleted;
         }
 
-        private async Task CreateCrawlTask()
+        private async Task CreateCrawlTask(int maxDepth)
         {
             Console.WriteLine("Starting crawl. Initial request count: " + m_RequestList.Count);
             while (m_RequestList.Count > 0)
@@ -112,7 +110,7 @@ namespace NETWebCrawler
                     link = MakeAbsoluteUrl(pageUrl, link);
 
                     bool goodLink = !string.IsNullOrEmpty(link);
-                    bool goodDepth = request.Depth + 1 <= MaxDepth;
+                    bool goodDepth = request.Depth + 1 <= maxDepth;
                     bool notVisited = !m_Visited.Contains(link);
 
 
