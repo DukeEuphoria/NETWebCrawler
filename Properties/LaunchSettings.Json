@@ -1,0 +1,8 @@
+{
+  "profiles": {
+      "C#: NETWebCrawler Debug": {
+      "commandName": "Project",
+      "commandLineArgs": "https://worldoffrogs.com/"
+    }
+  }
+}
