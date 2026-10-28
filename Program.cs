@@ -16,6 +16,12 @@ namespace NETWebCrawler
                 return -1;
             }
 
+            if (args[0].Contains("-?") || args[0].Contains("-h") || args[0].Contains("-help"))
+            {
+                Console.WriteLine("Usage: WEBCRAWL <url1> <url2> ... [-depth <n>]");
+                return 0;
+            }
+
             int maxDepth = 2;
 
             List<string> startUrls = new List<string>();
@@ -48,12 +54,6 @@ namespace NETWebCrawler
                 {
                     maxDepth = Math.Clamp(maxDepth, 1, 10);
                     Console.WriteLine("Invalid depth specified. Must be between 1 and 10. Depth Clamped to " + maxDepth);
-                }
-
-                if (arg.StartsWith("-?") || arg.StartsWith("-h") || arg.StartsWith("--help"))
-                {
-                    Console.WriteLine("Usage: WEBCRAWL <url1> <url2> ... [-depth <n>]");
-                    return 0;
                 }
 
                 startUrls.Add(arg);

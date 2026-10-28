@@ -139,11 +139,7 @@ namespace NETWebCrawler
             {
                 using HttpResponseMessage response = await m_Client.GetAsync(pageUrl);
 
-                if (response.IsSuccessStatusCode)
-                {
-                    m_Results.Add(new CrawlResult(pageUrl, CrawlResult.Status.Success));
-                }
-                else
+                if (!response.IsSuccessStatusCode)
                 {
                     m_Results.Add(new CrawlResult(pageUrl, CrawlResult.Status.Failed));  //Cannot fetch
                     return string.Empty;
@@ -157,6 +153,8 @@ namespace NETWebCrawler
                     m_Results.Add(new CrawlResult(pageUrl, CrawlResult.Status.Skipped)); //Not HTML
                     return string.Empty;
                 }
+
+                m_Results.Add(new CrawlResult(pageUrl, CrawlResult.Status.Success));
 
                 //At this point, we have a successful HTTP response with HTML content.
                 string html = await response.Content.ReadAsStringAsync();
@@ -232,11 +230,18 @@ namespace NETWebCrawler
 
         public void ReportResults()
         {
-            Console.WriteLine("Crawled URLs:");
+            int successCount = 0;
             foreach (CrawlResult url in m_Results)
             {
-                Console.WriteLine($"{url.Url}  Status: {url.CrawlStatus}");
+                if (url.CrawlStatus==CrawlResult.Status.Success)
+                {
+                    successCount++;
+                    Console.WriteLine(url.Url);
+                }   
             }
+
+            Console.WriteLine($"{m_Results.Count} Visited URLs");
+            Console.WriteLine($"{successCount} Successful");
         }
     }
 }
